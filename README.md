@@ -95,7 +95,11 @@ Being suspicious of a random DLL is the right instinct. Here's how you can check
   gh attestation verify version.dll --repo mateusgiordani/control-resonant-audiofix
   ```
   A modified or re-uploaded file fails this check. SHA-256 hashes are in `SHA256SUMS.txt` on each release.
-- **VirusTotal:** Look up the SHA-256 from `SHA256SUMS.txt` on [virustotal.com](https://www.virustotal.com/), or upload the DLL there yourself.
+- **VirusTotal (v1.0.0):** [2/71](https://www.virustotal.com/gui/file/550a7e601d823721f51e698f9970d668f4548a02c2d5299dd5c4b29ae38dd7b2). The two hits are ML/heuristic engines (Cynet, Malwarebytes
+  `Malware.AI.*`), not a known-malware signature. Any proxy DLL matches the pattern they flag: unsigned,
+  named like a Windows DLL, forwarding exports to `System32`, patching an import table. ReShade-style
+  mods trip the same engines. Microsoft Defender, Kaspersky, ESET, BitDefender, CrowdStrike, Sophos
+  and the other 65 report it clean. Don't take our word for it: read the source or build it yourself.
 - **Don't trust binaries at all?** Build it yourself (see below) and use your own `build\version.dll`.
 
 ## Configuration (`audiofix.ini`)

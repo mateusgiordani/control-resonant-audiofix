@@ -71,7 +71,12 @@ Desconfiar de uma DLL da internet é o instinto certo. Dá para conferir esta:
   gh attestation verify version.dll --repo mateusgiordani/control-resonant-audiofix
   ```
   Um arquivo alterado falha nessa verificação. Os hashes SHA-256 estão no `SHA256SUMS.txt` de cada release.
-- **VirusTotal:** Procure o SHA-256 do `SHA256SUMS.txt` no [virustotal.com](https://www.virustotal.com/) ou envie a DLL você mesmo.
+- **VirusTotal (v1.0.0):** [2/71](https://www.virustotal.com/gui/file/550a7e601d823721f51e698f9970d668f4548a02c2d5299dd5c4b29ae38dd7b2). Os dois alertas são de motores heurísticos/ML (Cynet,
+  Malwarebytes `Malware.AI.*`), não uma assinatura de malware conhecido. Toda DLL proxy cai no padrão
+  que eles marcam: sem assinatura, nome de DLL do Windows, repassando funções para o `System32`,
+  alterando a tabela de importação. Mods estilo ReShade disparam os mesmos motores. Microsoft
+  Defender, Kaspersky, ESET, BitDefender, CrowdStrike, Sophos e os outros 65 dão limpo. Não precisa
+  confiar na nossa palavra: leia o código ou compile você mesmo.
 - **Não confia em binário nenhum?** Compile você mesmo (abaixo).
 
 ## Compilar
