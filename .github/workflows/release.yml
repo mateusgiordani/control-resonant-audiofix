@@ -1,0 +1,80 @@
+name: build-and-release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write       # create the release
+  id-token: write       # sign the build attestation (Sigstore)
+  attestations: write   # store the attestation on GitHub
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: build.bat test
+
+      - name: Test (unaligned NO_BUFFERING read must fail without the DLL and succeed with it)
+        shell: pwsh
+        run: |
+          $t = Join-Path $env:RUNNER_TEMP "t"; New-Item -ItemType Directory $t | Out-Null
+          Copy-Item build\test\test.exe $t; Push-Location $t
+          .\test.exe;   if ($LASTEXITCODE) { throw "baseline failed" }
+          Copy-Item "$env:GITHUB_WORKSPACE\build\version.dll" .
+          .\test.exe 1; if ($LASTEXITCODE) { throw "fix failed" }
+          Get-Content audiofix.log
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist\pkg | Out-Null
+          Copy-Item build\version.dll, audiofix.ini, install.ps1, uninstall.ps1, README.md, README.pt-BR.md, LICENSE dist\pkg
+          Compress-Archive dist\pkg\* dist\ControlResonant-AudioFix.zip
+          Copy-Item build\version.dll dist\
+          Get-FileHash dist\version.dll, dist\ControlResonant-AudioFix.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Tee-Object dist\SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ControlResonant-AudioFix
+          path: dist/*.*
+
+      - name: Attest build provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/version.dll
+            dist/ControlResonant-AudioFix.zip
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $sums = Get-Content dist\SHA256SUMS.txt -Raw
+          $notes = @"
+          Built by GitHub Actions from commit ${{ github.sha }} ([build log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})).
+
+          **Install:** extract the zip and run ``install.ps1`` (right-click → Run with PowerShell), or copy ``version.dll`` + ``audiofix.ini`` next to ``CONTROLResonant.exe``.
+          **Remove:** run ``uninstall.ps1`` or delete ``version.dll`` from the game folder.
+
+          **Verify** this build came from this repository's source:
+          ``````
+          gh attestation verify version.dll --repo ${{ github.repository }}
+          ``````
+
+          SHA-256:
+          ``````
+          $sums
+          ``````
+          See the [README](${{ github.server_url }}/${{ github.repository }}#readme) for root cause and side effects. ([Português](${{ github.server_url }}/${{ github.repository }}/blob/main/README.pt-BR.md))
+          "@
+          gh release create "${{ github.ref_name }}" dist/ControlResonant-AudioFix.zip dist/version.dll dist/SHA256SUMS.txt --title "${{ github.ref_name }}" --notes $notes

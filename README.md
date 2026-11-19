@@ -80,6 +80,24 @@ Please read these, they are honest:
 - **Online/anti-cheat.** The game has no anti-cheat. This is a standard DLL proxy, like many mods
   (ReShade, SpecialK, etc.). Use at your own risk, as with any mod.
 
+## Is this safe? / Verifying the download
+
+Being suspicious of a random DLL is the right instinct. Here's how you can check this one:
+
+- **It's small and readable.** All the logic is in [`src/audiofix.c`](src/audiofix.c), about 300 lines of
+  plain C. It has no network code and adds no imports beyond `kernel32`. The only file it writes is
+  `audiofix.log`. The only thing it changes is the open flags of read-only `.rmdblob` files.
+- **Releases are built by GitHub Actions, not on someone's PC.** Each release links to its
+  [build log](../../actions), which shows the exact commit compiled and the test that ran.
+- **Every release has a signed build attestation.** It proves the DLL was produced from this repo's
+  source by that workflow. To verify it with the [GitHub CLI](https://cli.github.com/):
+  ```
+  gh attestation verify version.dll --repo mateusgiordani/control-resonant-audiofix
+  ```
+  A modified or re-uploaded file fails this check. SHA-256 hashes are in `SHA256SUMS.txt` on each release.
+- **VirusTotal:** Look up the SHA-256 from `SHA256SUMS.txt` on [virustotal.com](https://www.virustotal.com/), or upload the DLL there yourself.
+- **Don't trust binaries at all?** Build it yourself (see below) and use your own `build\version.dll`.
+
 ## Configuration (`audiofix.ini`)
 
 ```ini

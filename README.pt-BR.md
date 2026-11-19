@@ -58,6 +58,22 @@ No PC de teste: o jogo seguia pedindo 150–300 MB/s, mas a leitura real no disc
 - **Sem risco de perda de dados**: nada é escrito via cache (diferente do *Defer-Write* do PrimoCache).
 - O jogo não tem anti-cheat. É uma proxy DLL comum, como ReShade/SpecialK. Use por sua conta e risco, como qualquer mod.
 
+## É seguro? / Verificando o download
+
+Desconfiar de uma DLL da internet é o instinto certo. Dá para conferir esta:
+
+- **É pequena e legível:** toda a lógica está em [`src/audiofix.c`](src/audiofix.c), cerca de 300
+  linhas de C, sem código de rede. Ela só escreve o `audiofix.log` e só muda as flags de abertura dos
+  `.rmdblob` somente-leitura.
+- **As releases são compiladas pelo GitHub Actions**, não no PC de alguém, com o log do build público.
+- **Cada release tem um atestado de build assinado**, que prova que a DLL saiu deste código:
+  ```
+  gh attestation verify version.dll --repo mateusgiordani/control-resonant-audiofix
+  ```
+  Um arquivo alterado falha nessa verificação. Os hashes SHA-256 estão no `SHA256SUMS.txt` de cada release.
+- **VirusTotal:** Procure o SHA-256 do `SHA256SUMS.txt` no [virustotal.com](https://www.virustotal.com/) ou envie a DLL você mesmo.
+- **Não confia em binário nenhum?** Compile você mesmo (abaixo).
+
 ## Compilar
 
 Visual Studio 2022 Build Tools: `build.bat` (gera `build\version.dll`) e `build.bat test`.
